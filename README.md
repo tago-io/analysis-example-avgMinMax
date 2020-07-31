@@ -1,9 +1,9 @@
 ## What this does
 Get Average, Minimum and Maximum value from a variable
 
-## How to run the script on Tago
+## How to run the script on TagoIO
 Do your own modifications if you want.<br>
-Upload to Tago analysis, in the admin website.<br>
+Upload to TagoIO analysis, in the admin website.<br>
 Add the environment variable `device_token` with the device token of your choice.
 
 ## How to run the script from my computer
@@ -13,5 +13,4 @@ Open the analysis.js, change `MY-ANALYSIS-TOKEN-HERE` line for your analysis tok
 Open the terminal and run:
 
 `npm install`<br>
-`node .`
-
+`node analysis.js`

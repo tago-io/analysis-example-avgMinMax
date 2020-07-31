@@ -1,27 +1,29 @@
-/* 
+/*
  * Analysis Example
  * Minimum, maximum, and average
- * 
+ *
  * Get the minimum, maximum, and the average value of the variable temperature from your device,
  * and save these values in new variables
- * 
+ *
  * Instructions
  * To run this analysis you need to add a device token to the environment variables,
  * To do that, go to your device, then token and copy your token.
- * Go the the analysis, then environment variables, 
+ * Go the the analysis, then environment variables,
  * type device_token on key, and paste your token on value
 */
 
-const Analysis = require('tago/analysis');
-const Utils    = require('tago/utils');
-const Device   = require('tago/device');
+const { Analysis, Device, Utils} = require('@tago-io/sdk');
 
 // The function myAnalysis will run when you execute your analysis
 async function myAnalysis(context) {
   // reads the values from the environment and saves it in the variable env_vars
-  const env_vars = Utils.env_to_obj(context.environment);
+  const env_vars = Utils.envToJson(context.environment);
+  if (!env_vars.device_token) {
+    return context.log('Device token not found on environment parameters');
+  }
 
-  const device = new Device(env_vars.device_token);
+  const device = new Device({ token: env_vars.device_token });
+
   // This is a filter to get the minimum value of the variable temperature in the last day
   const minFilter = {
     variable: 'temperature',
@@ -31,17 +33,17 @@ async function myAnalysis(context) {
 
   // Now we use the filter for the device to get the data
   // check if the variable min has any value
-  // if so, we crete a new object to send to Tago
-  const [min] = await device.find(minFilter);
+  // if so, we crete a new object to send to TagoIO
+  const [min] = await device.getData(minFilter);
   if (min) {
     const minValue = {
       variable: 'temperature_minimum',
       value: min.value,
       unit: 'F',
     };
-  
-    // now we insert the new object with the minimum value
-    await device.insert(minValue).then(context.log('Temperature Minimum Updated'));
+
+    // Now we send the new object with the minimum value
+    await device.sendData(minValue).then(context.log('Temperature Minimum Updated'));
   } else {
     context.log('Minimum value not found');
   }
@@ -53,14 +55,16 @@ async function myAnalysis(context) {
     start_date: '1 day',
   };
 
-  const [max] = await device.find(maxFilter);
+  const [max] = await device.getData(maxFilter);
+
   if (max) {
     const maxValue = {
         'variable': 'temperature_maximum',
         'value': max.value,
         'unit': 'F',
     };
-    await device.insert(maxValue).then(context.log('Temperature Maximum Updated'));
+
+    await device.sendData(maxValue).then(context.log('Temperature Maximum Updated'));
   } else {
     context.log('Maximum value not found');
   }
@@ -72,23 +76,28 @@ async function myAnalysis(context) {
     start_date: '1 day',
   };
 
-  const avg = await device.find(avgFilter);
-  if (avg.length) {
-    let temperatureSum = avg.reduce((previewsValue, currentValue) => {
+  const dataAvgArray = await device.getData(avgFilter);
+
+  if (dataAvgArray.length) {
+    let temperatureSum = dataAvgArray.reduce((previewsValue, currentValue) => {
       return previewsValue + Number(currentValue.value);
     }, 0);
-  
-    temperatureSum = temperatureSum / avg.length;
-  
+
+    temperatureSum = temperatureSum / dataAvgArray.length;
+
     const avgValue = {
       'variable': 'temperature_average',
       'value': temperatureSum,
       'unit': 'F',
     };
-    await device.insert(avgValue).then(context.log('Temperature Average Updated'));
+
+    await device.sendData(avgValue).then(context.log('Temperature Average Updated'));
   } else {
     context.log('No result found for the avg calculation');
   }
 }
 
-module.exports = new Analysis(myAnalysis, 'MY-ANALYSIS-TOKEN-HERE');
+module.exports = new Analysis(myAnalysis);
+
+// To run analysis on your machine (external)
+// module.exports = new Analysis(myAnalysis, { token: "YOUR-TOKEN" });
