@@ -83,8 +83,8 @@ async function myAnalysis(context) {
   const dataAvgArray = await device.getData(avgFilter);
 
   if (dataAvgArray.length) {
-    let temperatureSum = dataAvgArray.reduce((previewsValue, currentValue) => {
-      return previewsValue + Number(currentValue.value);
+    let temperatureSum = dataAvgArray.reduce((previousValue, currentValue) => {
+      return previousValue + Number(currentValue.value);
     }, 0);
 
     temperatureSum = temperatureSum / dataAvgArray.length;
